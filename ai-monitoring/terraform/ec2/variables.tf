@@ -24,12 +24,6 @@ variable "subnet_id" {
   type        = string
 }
 
-variable "environment" {
-  description = "Environment name for namespacing resources (e.g. 'alice', 'bob')"
-  type        = string
-  default     = "default"
-}
-
 variable "instance_type" {
   description = "EC2 instance type (must support NVIDIA GPU for Ollama)"
   type        = string

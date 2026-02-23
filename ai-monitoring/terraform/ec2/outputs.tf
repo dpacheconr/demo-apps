@@ -8,9 +8,9 @@ output "public_ip" {
   value       = aws_instance.aim_demo.public_ip
 }
 
-output "environment" {
-  description = "Environment name for this deployment"
-  value       = var.environment
+output "owner_slug" {
+  description = "Owner slug derived from email, used for resource naming"
+  value       = local.owner_slug
 }
 
 output "private_key_path" {

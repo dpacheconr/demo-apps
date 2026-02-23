@@ -5,7 +5,7 @@ The infrastructure is split into two independent Terraform configs:
 | Config | Purpose | Run frequency |
 |--------|---------|---------------|
 | `network/` | VPC, subnet, internet gateway, route table | Once (shared) |
-| `ec2/` | EC2 instance, security group, IAM, SSH key pair | Per environment |
+| `ec2/` | EC2 instance, security group, IAM, SSH key pair | Per person |
 
 All state is stored in the S3 bucket `emeafet-terraform-tfstates`, keyed by owner email.
 
@@ -63,7 +63,7 @@ Note the outputs — you'll need `vpc_id` and `subnet_id` for the EC2 config.
 cd ../ec2
 ```
 
-**Configure backend** — use your email and an environment name in the key path:
+**Configure backend** — use your email in the key path:
 
 ```bash
 cp backend.hcl.example backend.hcl
@@ -95,7 +95,7 @@ terraform apply
 ```
 
 After apply:
-- SSH key is auto-generated at `keys/<environment>.pem`
+- SSH key is auto-generated at `keys/<owner_slug>.pem` (e.g. `keys/dpacheco.pem`)
 - Use the `ssh_tunnel_command` output to access services via localhost
 
 ## 3. Access Services
@@ -105,7 +105,7 @@ All web ports are closed to the internet. Access is via SSH tunnel only.
 Run the tunnel command from the Terraform output:
 
 ```bash
-ssh -i keys/default.pem \
+ssh -i keys/dpacheco.pem \
   -L 8501:localhost:8501 \
   -L 8089:localhost:8089 \
   -L 8001:localhost:8001 \
@@ -124,44 +124,43 @@ Then open in your browser:
 
 ## Multiple Environments
 
-To run multiple EC2 instances under the same network, use a different `environment` name and a separate backend key.
+To run multiple EC2 instances under the same network, each person only needs their own owner email and backend HCL file.
 
-**Create a second backend config:**
+**Create your backend config:**
 
 ```hcl
-# backend-staging.hcl
+# backend.hcl
 bucket  = "emeafet-terraform-tfstates"
-key     = "you@example.com/staging/terraform.tfstate"
+key     = "you@example.com/default/terraform.tfstate"
 region  = "eu-west-2"
 encrypt = true
 ```
 
-**Add the environment to your tfvars:**
+**Set your owner in `terraform.tfvars`:**
 
 ```hcl
-environment = "staging"
+owner = "you@example.com"
 ```
 
-**Deploy with the separate backend:**
+**Deploy:**
 
 ```bash
-terraform init -backend-config=backend-staging.hcl -reconfigure
+terraform init -backend-config=backend.hcl -reconfigure
 terraform apply
 ```
 
-Each environment gets its own state file, key pair (`keys/staging.pem`), and namespaced AWS resources.
+Each person gets their own state file, key pair, and namespaced AWS resources.
 
 ## S3 State Layout
 
 ```
 s3://emeafet-terraform-tfstates/
-  alice@example.com/
+  user-a@example.com/
     network/terraform.tfstate
     default/terraform.tfstate
-  bob@example.com/
+  user-b@example.com/
     network/terraform.tfstate
     default/terraform.tfstate
-    staging/terraform.tfstate
 ```
 
 ## Tear Down

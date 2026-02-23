@@ -29,6 +29,12 @@ provider "aws" {
   }
 }
 
+locals {
+  # Derive a short slug from the owner email for resource naming
+  # e.g. "dpacheco@newrelic.com" → "dpacheco"
+  owner_slug = replace(split("@", var.owner)[0], "/[^a-zA-Z0-9-]/", "-")
+}
+
 # ---------- Data Sources ----------
 
 # Deep Learning OSS NVIDIA Driver AMI (Ubuntu 22.04) — drivers pre-installed
@@ -55,21 +61,21 @@ resource "tls_private_key" "ssh" {
 }
 
 resource "aws_key_pair" "this" {
-  key_name   = "${var.name_prefix}-${var.environment}"
+  key_name   = "${var.name_prefix}-${local.owner_slug}"
   public_key = tls_private_key.ssh.public_key_openssh
 }
 
 resource "local_file" "private_key" {
   content         = tls_private_key.ssh.private_key_pem
-  filename        = "${path.module}/keys/${var.environment}.pem"
+  filename        = "${path.module}/keys/${local.owner_slug}.pem"
   file_permission = "0400"
 }
 
 # ---------- Security Group ----------
 
 resource "aws_security_group" "aim_demo" {
-  name        = "${var.name_prefix}-${var.environment}-sg"
-  description = "Security group for AI Monitoring demo (${var.environment})"
+  name        = "${var.name_prefix}-${local.owner_slug}-sg"
+  description = "Security group for AI Monitoring demo (${local.owner_slug})"
   vpc_id      = var.vpc_id
 
   # SSH
@@ -90,14 +96,14 @@ resource "aws_security_group" "aim_demo" {
   }
 
   tags = {
-    Name = "${var.name_prefix}-${var.environment}-sg"
+    Name = "${var.name_prefix}-${local.owner_slug}-sg"
   }
 }
 
 # ---------- IAM Role (SSM access) ----------
 
 resource "aws_iam_role" "aim_demo" {
-  name = "${var.name_prefix}-${var.environment}-ec2-role"
+  name = "${var.name_prefix}-${local.owner_slug}-ec2-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -108,7 +114,7 @@ resource "aws_iam_role" "aim_demo" {
     }]
   })
 
-  tags = { Name = "${var.name_prefix}-${var.environment}-ec2-role" }
+  tags = { Name = "${var.name_prefix}-${local.owner_slug}-ec2-role" }
 }
 
 resource "aws_iam_role_policy_attachment" "ssm" {
@@ -117,7 +123,7 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 }
 
 resource "aws_iam_instance_profile" "aim_demo" {
-  name = "${var.name_prefix}-${var.environment}-ec2-profile"
+  name = "${var.name_prefix}-${local.owner_slug}-ec2-profile"
   role = aws_iam_role.aim_demo.name
 }
 
@@ -150,6 +156,6 @@ resource "aws_instance" "aim_demo" {
   }
 
   tags = {
-    Name = "${var.name_prefix}-${var.environment}-ec2"
+    Name = "${var.name_prefix}-${local.owner_slug}-ec2"
   }
 }
