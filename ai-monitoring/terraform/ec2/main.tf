@@ -136,7 +136,8 @@ resource "aws_instance" "aim_demo" {
   iam_instance_profile        = aws_iam_instance_profile.aim_demo.name
   vpc_security_group_ids      = [aws_security_group.aim_demo.id]
   subnet_id                   = var.subnet_id
-  associate_public_ip_address = true
+  associate_public_ip_address              = true
+  instance_initiated_shutdown_behavior = "terminate"
 
   root_block_device {
     volume_size           = var.root_volume_size
@@ -149,6 +150,7 @@ resource "aws_instance" "aim_demo" {
     new_relic_license_key = var.new_relic_license_key
     model_a_name          = var.model_a_name
     model_b_name          = var.model_b_name
+    instance_ttl_hours    = var.instance_ttl_hours
   })
 
   metadata_options {

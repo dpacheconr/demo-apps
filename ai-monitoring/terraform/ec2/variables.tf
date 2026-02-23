@@ -65,3 +65,14 @@ variable "model_b_name" {
   type        = string
   default     = "ministral-3:8b-instruct-2512-q8_0"
 }
+
+variable "instance_ttl_hours" {
+  description = "Hours before the instance auto-terminates (0 = disabled)"
+  type        = number
+  default     = 72
+
+  validation {
+    condition     = var.instance_ttl_hours >= 0 && var.instance_ttl_hours <= 168
+    error_message = "instance_ttl_hours must be between 0 (disabled) and 168 (7 days)."
+  }
+}

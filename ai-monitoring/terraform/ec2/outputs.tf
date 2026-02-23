@@ -52,3 +52,8 @@ output "setup_log_command" {
   description = "Command to tail the setup log on the instance"
   value       = "ssh -i ${local_file.private_key.filename} ubuntu@${aws_instance.aim_demo.public_ip} 'tail -f /var/log/aim-demo-setup.log'"
 }
+
+output "auto_termination" {
+  description = "Instance auto-termination schedule"
+  value       = var.instance_ttl_hours > 0 ? "Instance will auto-terminate ~${var.instance_ttl_hours}h after boot" : "DISABLED"
+}

@@ -18,6 +18,7 @@ new_relic_license_key = "YOUR_LICENSE_KEY_HERE"
 # name_prefix      = "aim-demo"
 # model_a_name     = "mistral:7b-instruct"
 # model_b_name     = "ministral-3:8b-instruct-2512-q8_0"
+# instance_ttl_hours = 72  # Auto-terminate after N hours (0 = disabled)
 
 # Restrict SSH access to your IP (recommended — all web access is via SSH tunnel)
 # allowed_ssh_cidrs = ["1.2.3.4/32"]

@@ -130,8 +130,8 @@ MODEL_A_NAME=${model_a_name}
 MODEL_B_NAME=${model_b_name}
 
 AGENT_PORT=8001
-AGENT_MAX_ITERATIONS=10
-AGENT_MAX_EXECUTION_TIME=300
+AGENT_MAX_ITERATIONS=25
+AGENT_MAX_EXECUTION_TIME=600
 MCP_PORT=8002
 LOCUST_WEB_PORT=8089
 MCP_SERVER_URL=http://mcp-server:8002
@@ -181,3 +181,17 @@ echo " Flask UI:  http://localhost:8501"
 echo " Locust UI: http://localhost:8089"
 echo " Setup log: $LOG_FILE"
 echo "============================================="
+
+# -------------------------------------------------------
+# 8. Schedule automatic instance termination (TTL)
+# -------------------------------------------------------
+TTL_HOURS=${instance_ttl_hours}
+
+if [ "$TTL_HOURS" -gt 0 ]; then
+  TTL_MINUTES=$((TTL_HOURS * 60))
+  echo "[Setup] Instance will auto-terminate in $TTL_HOURS hour(s) ($TTL_MINUTES minutes)"
+  echo "[Setup] Scheduled termination at: $(date -d "+$TTL_MINUTES minutes" '+%Y-%m-%d %H:%M:%S %Z')"
+  sudo shutdown -h +$TTL_MINUTES "AIM Demo TTL expired ($TTL_HOURS hours). Instance will terminate."
+else
+  echo "[Setup] Auto-termination DISABLED (instance_ttl_hours=0)"
+fi
