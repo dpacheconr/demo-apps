@@ -1,0 +1,11 @@
+# Auto-generated SSH private keys
+keys/*.pem
+
+# Tfvars files (contain secrets like NR license key, AWS resource IDs)
+terraform.tfvars
+env-*.tfvars
+!env-example.tfvars
+
+# Per-user backend config
+backend*.hcl
+!backend.hcl.example

@@ -1,0 +1,7 @@
+# Usage: terraform init -backend-config=backend.hcl
+# The S3 bucket must already exist.
+
+bucket  = "emeafet-terraform-tfstates"
+key     = "you@example.com/network/terraform.tfstate"
+region  = "eu-west-2"
+encrypt = true

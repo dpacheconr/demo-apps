@@ -1,0 +1,9 @@
+# Usage: terraform init -backend-config=backend.hcl
+# The S3 bucket must already exist.
+# For multiple environments, use a separate backend.hcl per env:
+#   terraform init -backend-config=backend-alice.hcl
+
+bucket  = "emeafet-terraform-tfstates"
+key     = "you@example.com/alice/terraform.tfstate"
+region  = "eu-west-2"
+encrypt = true

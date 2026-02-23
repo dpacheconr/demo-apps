@@ -1,0 +1,3 @@
+# Per-user backend config
+backend*.hcl
+!backend.hcl.example
