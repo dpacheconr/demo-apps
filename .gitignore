@@ -139,6 +139,9 @@ config/*.json
 .terraform*
 terraform.tfstate*
 
+# Terraform folder lives on ftr/aim-terraform-ec2 branch only
+ai-monitoring/terraform/
+
 # SSH private keys
 *.pem
 
