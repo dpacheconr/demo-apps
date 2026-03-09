@@ -16,6 +16,38 @@ imds_token() {
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Disable unattended-upgrades so it doesn't hold apt locks during setup
+systemctl disable --now unattended-upgrades apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true
+# Kill any in-flight unattended-upgrade process (can run for 10-40 min on fresh instances)
+while pgrep -x unattended-upgr > /dev/null; do
+  echo "[Setup] Waiting for unattended-upgrades to finish..."
+  sleep 5
+done
+
+# Wait for dpkg/apt lock
+wait_for_apt_lock() {
+  local lock_files=(/var/lib/dpkg/lock /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock)
+  while true; do
+    local locked=0
+    for lock in "$${lock_files[@]}"; do
+      if [ -f "$lock" ]; then
+        if lsof "$lock" &>/dev/null; then
+          locked=1
+          break
+        fi
+      fi
+    done
+    if [ $locked -eq 0 ]; then
+      break
+    fi
+    echo "[Setup] Waiting for apt/dpkg lock..."
+    sleep 5
+  done
+}
+
+# Remove duplicate NVIDIA CUDA repo sources
+rm -f /etc/apt/sources.list.d/archive_uri-https_developer_download_nvidia_com_compute_cuda_repos_ubuntu2204_x86_64_-jammy.list || true
+
 # -------------------------------------------------------
 # 1. Verify pre-installed NVIDIA driver (from DL AMI)
 # -------------------------------------------------------
@@ -26,7 +58,9 @@ nvidia-smi
 # 2. Install Docker Engine
 # -------------------------------------------------------
 echo "[Setup] Installing Docker..."
+wait_for_apt_lock
 apt-get update -y
+wait_for_apt_lock
 apt-get install -y ca-certificates curl gnupg git jq openssl
 
 install -m 0755 -d /etc/apt/keyrings
@@ -39,7 +73,9 @@ echo \
   https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
   > /etc/apt/sources.list.d/docker.list
 
+wait_for_apt_lock
 apt-get update -y
+wait_for_apt_lock
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 systemctl enable docker
@@ -56,7 +92,9 @@ curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-contai
   | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
   > /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
+wait_for_apt_lock
 apt-get update -y
+wait_for_apt_lock
 apt-get install -y nvidia-container-toolkit
 
 nvidia-ctk runtime configure --runtime=docker --set-as-default
@@ -75,7 +113,9 @@ curl -fsSL https://download.newrelic.com/infrastructure_agent/gpg/newrelic-infra
 echo "deb [signed-by=/usr/share/keyrings/newrelic-infra.gpg] https://download.newrelic.com/infrastructure_agent/linux/apt/ jammy main" \
   > /etc/apt/sources.list.d/newrelic-infra.list
 
+wait_for_apt_lock
 apt-get update -y
+wait_for_apt_lock
 apt-get install -y newrelic-infra
 
 cat > /etc/newrelic-infra.yml <<NRIEOF

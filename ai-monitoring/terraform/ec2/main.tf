@@ -157,6 +157,10 @@ resource "aws_instance" "aim_demo" {
     http_tokens = "required" # IMDSv2
   }
 
+  timeouts {
+    create = "3m" # Fail fast on InsufficientInstanceCapacity instead of retrying silently
+  }
+
   tags = {
     Name = "${var.name_prefix}-${local.owner_slug}-ec2"
   }
