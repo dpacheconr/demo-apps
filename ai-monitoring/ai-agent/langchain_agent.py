@@ -193,13 +193,14 @@ class ModelRouter:
         return MODEL_A_NAME if model == "a" else MODEL_B_NAME
 
 
-# Global router instance (initialized by app.py)
+# Global router instances (initialized by app.py)
 _router = None
+_chat_router = None
 
 
 def init_router(prompt_template: PromptTemplate) -> ModelRouter:
     """
-    Initialize global model router.
+    Initialize global model router (for /repair endpoint).
 
     Args:
         prompt_template: System prompt template for agents
@@ -212,9 +213,24 @@ def init_router(prompt_template: PromptTemplate) -> ModelRouter:
     return _router
 
 
+def init_chat_router(prompt_template: PromptTemplate) -> ModelRouter:
+    """
+    Initialize global chat model router (for /chat endpoint).
+
+    Args:
+        prompt_template: System prompt template for chat agents
+
+    Returns:
+        Initialized ModelRouter instance
+    """
+    global _chat_router
+    _chat_router = ModelRouter(prompt_template)
+    return _chat_router
+
+
 def get_router() -> ModelRouter:
     """
-    Get global model router instance.
+    Get global model router instance (repair).
 
     Returns:
         ModelRouter instance
@@ -227,6 +243,23 @@ def get_router() -> ModelRouter:
             "ModelRouter not initialized. Call init_router() first."
         )
     return _router
+
+
+def get_chat_router() -> ModelRouter:
+    """
+    Get global chat model router instance.
+
+    Returns:
+        ModelRouter instance
+
+    Raises:
+        RuntimeError: If chat router not initialized
+    """
+    if _chat_router is None:
+        raise RuntimeError(
+            "Chat ModelRouter not initialized. Call init_chat_router() first."
+        )
+    return _chat_router
 
 
 async def run_agent_workflow(
@@ -271,6 +304,13 @@ async def run_agent_workflow(
 
         # Execute agent
         result = await agent.ainvoke({"input": prompt})
+
+        # Detect LangChain force-stop (max_iterations or max_execution_time reached).
+        # AgentExecutor does NOT raise an exception in this case — it returns silently
+        # with a special output string, making the timeout invisible to New Relic.
+        agent_output = result.get('output', '')
+        if 'Agent stopped due to iteration limit or time limit' in agent_output:
+            raise RuntimeError(f"Agent force-stopped (timeout or iteration limit): {agent_output}")
 
         success = True
         latency = time.time() - start_time
@@ -328,6 +368,9 @@ async def run_agent_workflow(
         error_msg = str(e)
         metrics.record_request(success=False, latency=latency)
 
+        # Surface the error in New Relic error inbox
+        newrelic.agent.notice_error()
+
         # Generate and record negative feedback for errors
         rating, category, message = generate_feedback_rating(
             success=False,
@@ -353,6 +396,140 @@ async def run_agent_workflow(
         logger.error(
             f"[AGENT-WORKFLOW] Failed: model={model}, "
             f"error={type(e).__name__}: {e}",
+            exc_info=True
+        )
+
+        return {
+            'output': f"Error: {str(e)}",
+            'intermediate_steps': result.get('intermediate_steps', []) if result else [],
+            'model_name': model_name,
+            'model_variant': model,
+            'success': False,
+            'latency_seconds': latency,
+            'error': error_msg,
+        }
+
+
+async def run_chat_workflow(
+    model: Literal["a", "b"],
+    prompt: str
+) -> Dict[str, Any]:
+    """
+    Execute chat workflow using the chat router (CHAT_PROMPT_TEMPLATE).
+
+    Uses a separate router initialized with the chat prompt, which does NOT
+    force system_health on every request. This allows conversational questions
+    to be answered without triggering repair loops.
+
+    Args:
+        model: Model identifier ("a" or "b")
+        prompt: User message
+
+    Returns:
+        Same structure as run_agent_workflow
+    """
+    import newrelic.agent
+    from observability import generate_feedback_rating, record_feedback_event
+
+    router = get_chat_router()
+    agent = router.get_agent(model)
+    metrics = router.get_metrics(model)
+    model_name = router.get_model_name(model)
+
+    import time
+    start_time = time.time()
+    success = False
+    result = None
+    error_msg = None
+
+    trace_id = newrelic.agent.current_trace_id()
+
+    try:
+        logger.info(f"[CHAT-WORKFLOW] Starting with model {model} ({model_name})")
+        logger.info(f"[CHAT-WORKFLOW] Prompt: {prompt[:100]}...")
+
+        result = await agent.ainvoke({"input": prompt})
+
+        # Detect LangChain force-stop (max_iterations or max_execution_time reached).
+        # AgentExecutor does NOT raise an exception in this case — it returns silently
+        # with a special output string, making the timeout invisible to New Relic.
+        agent_output = result.get('output', '')
+        if 'Agent stopped due to iteration limit or time limit' in agent_output:
+            raise RuntimeError(f"Agent force-stopped (timeout or iteration limit): {agent_output}")
+
+        success = True
+        latency = time.time() - start_time
+        total_tokens = 0
+        tool_count = len(result.get('intermediate_steps', []))
+
+        metrics.record_request(success=True, latency=latency, tokens=total_tokens)
+
+        rating, category, message = generate_feedback_rating(
+            success=True,
+            latency_seconds=latency,
+            tool_count=tool_count,
+            error=None
+        )
+
+        if trace_id:
+            record_feedback_event(
+                trace_id=trace_id,
+                rating=rating,
+                category=category,
+                message=message,
+                metadata={
+                    'model_variant': model,
+                    'model_name': model_name,
+                    'tool_count': tool_count,
+                    'latency_seconds': round(latency, 2),
+                    'prompt_length': len(prompt)
+                }
+            )
+
+        logger.info(
+            f"[CHAT-WORKFLOW] Completed: model={model}, latency={latency:.2f}s, steps={tool_count}"
+        )
+
+        return {
+            'output': result.get('output', ''),
+            'intermediate_steps': result.get('intermediate_steps', []),
+            'model_name': model_name,
+            'model_variant': model,
+            'success': True,
+            'latency_seconds': latency,
+        }
+
+    except Exception as e:
+        latency = time.time() - start_time
+        error_msg = str(e)
+        metrics.record_request(success=False, latency=latency)
+
+        # Surface the error in New Relic error inbox
+        newrelic.agent.notice_error()
+
+        rating, category, message = generate_feedback_rating(
+            success=False,
+            latency_seconds=latency,
+            tool_count=0,
+            error=error_msg
+        )
+
+        if trace_id:
+            record_feedback_event(
+                trace_id=trace_id,
+                rating=rating,
+                category=category,
+                message=message,
+                metadata={
+                    'model_variant': model,
+                    'model_name': model_name,
+                    'error_type': type(e).__name__,
+                    'latency_seconds': round(latency, 2)
+                }
+            )
+
+        logger.error(
+            f"[CHAT-WORKFLOW] Failed: model={model}, error={type(e).__name__}: {e}",
             exc_info=True
         )
 

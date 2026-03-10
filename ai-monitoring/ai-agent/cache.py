@@ -96,7 +96,7 @@ class TTLCache:
 
 
 # Global caches for MCP tools
-system_health_cache = TTLCache(name="system_health", ttl_seconds=60)
+system_health_cache = TTLCache(name="system_health", ttl_seconds=5)
 database_status_cache = TTLCache(name="database_status", ttl_seconds=90)
 
 

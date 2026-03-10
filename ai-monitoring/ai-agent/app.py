@@ -21,8 +21,10 @@ import newrelic.agent
 # LangChain agent components
 from langchain_agent import (
     init_router,
+    init_chat_router,
     get_router,
     run_agent_workflow,
+    run_chat_workflow,
     get_all_metrics,
 )
 from prompts import REPAIR_PROMPT_TEMPLATE, CHAT_PROMPT_TEMPLATE
@@ -65,12 +67,19 @@ async def lifespan(app: FastAPI):
     logger.info(f"MCP Server: {os.getenv('MCP_SERVER_URL')}")
     logger.info("=" * 60)
 
-    # Initialize LangChain agent router
+    # Initialize LangChain agent routers
     try:
         init_router(REPAIR_PROMPT_TEMPLATE)
-        logger.info("✅ ModelRouter initialized successfully")
+        logger.info("✅ Repair ModelRouter initialized successfully")
     except Exception as e:
-        logger.error(f"❌ Failed to initialize ModelRouter: {e}", exc_info=True)
+        logger.error(f"❌ Failed to initialize repair ModelRouter: {e}", exc_info=True)
+        raise
+
+    try:
+        init_chat_router(CHAT_PROMPT_TEMPLATE)
+        logger.info("✅ Chat ModelRouter initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize chat ModelRouter: {e}", exc_info=True)
         raise
 
     # Register New Relic application (for metadata)
@@ -174,6 +183,10 @@ async def trigger_repair(
                 tool_name = action.tool if hasattr(action, 'tool') else str(action)
                 tool_input = action.tool_input if hasattr(action, 'tool_input') else {}
 
+                # Skip LangChain internal parsing error artifacts
+                if tool_name == '_Exception':
+                    continue
+
                 tool_calls.append(ToolCall(
                     tool_name=tool_name,
                     arguments=tool_input if isinstance(tool_input, dict) else {},
@@ -249,8 +262,8 @@ async def chat(request: ChatRequest):
     logger.info(f"[CHAT] Request: model={request.model}, message={request.message[:50]}...")
 
     try:
-        # Execute chat workflow
-        result = await run_agent_workflow(request.model, request.message)
+        # Execute chat workflow using chat-specific prompt (no forced system_health)
+        result = await run_chat_workflow(request.model, request.message)
 
         model_name = result['model_name']
 

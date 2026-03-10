@@ -60,7 +60,7 @@ SIMPLE_PROMPTS = [
         "use_workflow": False
     },
     {
-        "prompt": "Explain how you diagnose system failures",
+        "prompt": "What is the general process for diagnosing system failures in distributed systems?",
         "category": "simple_chat",
         "description": "Process explanation",
         "expected_tools": 0,
@@ -101,7 +101,7 @@ COMPLEX_PROMPTS = [
         "use_workflow": False
     },
     {
-        "prompt": "Walk me through your complete diagnostic workflow. What's your decision tree for determining whether to restart a service versus updating its configuration?",
+        "prompt": "What factors would you consider when deciding whether to restart a service versus updating its configuration? What are the trade-offs?",
         "category": "complex_chat",
         "description": "Complex process explanation",
         "expected_tools": 0,

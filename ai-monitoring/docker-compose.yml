@@ -33,6 +33,8 @@ services:
         reservations:
           cpus: '8.0'
           memory: 8G
+    restart: unless-stopped
+
 
   # Model B - Ministral 3:8b with 8-bit quantization (q8_0)
   ollama-model-b:
@@ -66,6 +68,8 @@ services:
         reservations:
           cpus: '8.0'
           memory: 8G
+    restart: unless-stopped
+          
 
   # MCP Server - Tool interface for generic system operations
   mcp-server:

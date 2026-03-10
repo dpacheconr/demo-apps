@@ -61,8 +61,8 @@ The system consists of 6 Docker services:
 | **flask-ui** | 8501 | Flask 3.0 + gunicorn | Web interface: Home, Tools, Chat (with prompt pool), Debug | [flask-ui/README.md](flask-ui/README.md) |
 | **ai-agent** | 8001 | LangChain + FastAPI | Autonomous reasoning engine with tool calling & observability | [ai-agent/README.md](ai-agent/README.md) |
 | **mcp-server** | 8002 | FastMCP + FastAPI | Generic system operation tools (6 mock tools) | [mcp-server/README.md](mcp-server/README.md) |
-| **ollama-model-a** | 11434 | Ollama + mistral:7b-instruct-v0.3 | Reliable LLM (~4GB) | [See below](#ollama-services) |
-| **ollama-model-b** | 11435 | Ollama + ministral-3:8b-instruct-2512-q8_0 | Efficient Mistral variant (~8GB) | [See below](#ollama-services) |
+| **ollama-model-a** | 11434 | Ollama + mistral:7b-instruct-v0.3 | Efficient & Fast LLM (~4GB) | [See below](#ollama-services) |
+| **ollama-model-b** | 11435 | Ollama + ministral-3:8b-instruct-2512-q8_0 | Reliable & Accurate LLM (~10GB, q8_0) | [See below](#ollama-services) |
 | **locust-tests** | 8089 | Locust 2.43.0 | Passive load (5-10 req/hr) with 18-prompt pool | [locust-tests/README.md](locust-tests/README.md) |
 
 **For detailed service architecture, APIs, and local development, see each service's README.**
@@ -71,8 +71,8 @@ The system consists of 6 Docker services:
 
 Both Ollama services use pre-built Docker images with models baked in during build:
 
-- **Model A (mistral:7b-instruct-v0.3)**: ~4GB image, 4.5-5GB runtime memory, Reliable JSON formatting
-- **Model B (ministral-3:8b-instruct-2512-q8_0)**: ~8GB image, 8-10GB runtime memory, Efficient Mistral variant with 8-bit quantization for reliable tool calling
+- **Model A (mistral:7b-instruct-v0.3)**: ~4GB image, 4.5-5GB runtime memory, Efficient & Fast (~2s latency)
+- **Model B (ministral-3:8b-instruct-2512-q8_0)**: ~10GB image, 9-10GB runtime memory, Reliable & Accurate with 8-bit quantization for higher-precision tool calling (~70s latency)
 - Dockerfiles: `Dockerfile.ollama-model-a` and `Dockerfile.ollama-model-b` in project root
 
 ## 📋 Prerequisites
@@ -179,8 +179,8 @@ http://localhost:8501
 **How to Use**:
 1. From home page, click "Tool Execution" card (or navigate to `/tools`)
 2. Select a model:
-   - **Model A (mistral:7b-instruct-v0.3)**: Reliable & Accurate (~2-4s latency)
-   - **Model B (ministral-3:8b-instruct-2512-q8_0)**: Efficient & Fast (~2-3s latency)
+   - **Model A (mistral:7b-instruct-v0.3)**: Efficient & Fast (~2s latency)
+   - **Model B (ministral-3:8b-instruct-2512-q8_0)**: Reliable & Accurate (~70s latency, q8_0 high-precision)
 3. Click "Run Workflow"
 4. Watch the agent autonomously:
    - Check system health status
@@ -256,13 +256,13 @@ The agent should maintain boundaries while remaining helpful, with all interacti
 3. **Service Status**: Show all 6 running containers (`docker ps`)
 4. **Tool Execution Workflow**:
    - Navigate to `/tools`
-   - Select Model A (reliable)
+   - Select Model A (Efficient & Fast)
    - Click "Run Workflow"
    - Watch agent autonomously invoke multiple tools
    - View execution results and timing
 5. **Model Comparison**:
-   - Run same workflow with Model B (efficient)
-   - Compare latency differences (Model B typically faster)
+   - Run same workflow with Model B (Reliable & Accurate)
+   - Compare latency differences (Model A ~2s, Model B ~70s with higher-precision q8_0 weights)
 6. **Chat Interface**:
    - Navigate to `/chat`
    - Test normal queries ("What is system status?")
@@ -736,10 +736,10 @@ All operations return realistic JSON data and create distributed traces visible 
 
 ### What to Compare
 
-- **Speed**: Both models have similar latency (~2-4s) due to comparable size
-- **Accuracy**: Model A (mistral:7b-instruct) is the proven standard, Model B (ministral-3:8b q8_0) uses 8-bit quantization for better tool calling reliability
-- **Size**: Model A (~4GB) vs Model B (~8GB) - Model B uses higher precision quantization for more reliable structured outputs
-- **Use Case Fit**: Model A for maximum reliability, Model B as alternative with enhanced tool support via 8-bit quantization
+- **Speed**: Model A (~2s) is significantly faster than Model B (~70s) due to smaller size and lower quantization overhead
+- **Accuracy**: Model B (ministral-3:8b q8_0) uses 8-bit quantization for higher-precision weights and more reliable tool calling; Model A (mistral:7b-instruct) is lighter and faster
+- **Size**: Model A (~4GB) vs Model B (~10GB) - Model B uses higher-precision q8_0 quantization for more reliable structured outputs
+- **Use Case Fit**: Model A for fast, efficient responses; Model B for reliable, accurate results with higher-precision reasoning
 
 ## 📊 New Relic Instrumentation
 

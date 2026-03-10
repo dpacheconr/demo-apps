@@ -6,7 +6,7 @@ Autonomous reasoning engine powered by **LangChain** that executes multi-step sy
 
 - **Autonomous Tool Workflows**: Executes multi-step system operations through intelligent tool orchestration
 - **LangChain Integration**: Native LangChain agent with Ollama and MCP tool support
-- **Dual Model Support**: A/B testing with two LLM models (mistral:7b-instruct and ministral-3:8b-instruct-2512-q8_0)
+- **Dual Model Support**: A/B testing with two LLM models — Model A (mistral:7b-instruct, Efficient & Fast) and Model B (ministral-3:8b-instruct-2512-q8_0, Reliable & Accurate)
 - **Backend Workflow Control**: Deterministic tool invocations via workflow parameters
 - **MCP Tool Calling**: Integrates with MCP server for generic system operation tools
 - **LLM Feedback Events**: Automatic binary rating generation with smart heuristics
@@ -244,8 +244,8 @@ def token_count_callback(model: str, content: Any) -> int:
 ## Dependencies
 
 ### Upstream Services
-- **ollama-model-a** (Port 11434): Mistral 7B Instruct model for reliable reasoning
-- **ollama-model-b** (Port 11435): Ministral 3:8b q8_0 model for efficient reasoning
+- **ollama-model-a** (Port 11434): Mistral 7B Instruct — Efficient & Fast (~2s latency)
+- **ollama-model-b** (Port 11435): Ministral 8B q8_0 — Reliable & Accurate (~70s latency, higher-precision weights)
 - **mcp-server** (Port 8002): Tool interface for system operations
 
 ### Downstream Services

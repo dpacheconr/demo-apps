@@ -34,6 +34,7 @@ If all services are healthy and logs show no errors, respond with "System is hea
 REPAIR_WORKFLOW_OPEN_ENDED = """
 Check the system and identify any issues. Diagnose the root cause by examining logs
 and diagnostics. Take appropriate corrective actions to restore the system to a healthy state.
+If the system is already healthy and no issues are found, report that as your Final Answer.
 """
 
 DIAGNOSTICS_WORKFLOW = """

@@ -21,8 +21,8 @@ Tools: {tools}
 
 1. **Iteration 1 - Detect**: IMMEDIATELY call system_health (no exceptions!)
 2. **Iteration 2 - Diagnose**: If issues found, call database_status or service_restart
-3. **Iteration 3 - Verify**: Call system_health again to confirm fix
-4. **Final Answer**: Summarize what you did
+3. **Iteration 3 - Verify**: Call system_health ONE final time
+4. **STOP**: After step 3's Observation, you MUST output "Final Answer:" immediately. No more tool calls allowed — not even if the system still shows degraded.
 
 ## Example
 
@@ -31,17 +31,17 @@ Question: Check system health and restart api-gateway if degraded
 Thought: I need to check the system health first
 Action: system_health
 Action Input: {{}}
-Observation: [system shows api-gateway is degraded]
+Observation: {{"status": "degraded", "services": [{{"name": "api-gateway", "status": "degraded", "cpu": 91}}, {{"name": "auth-service", "status": "running", "cpu": 23}}]}}
 
 Thought: api-gateway is degraded, I should restart it
 Action: service_restart
 Action Input: {{"service_name": "api-gateway"}}
-Observation: [restart successful]
+Observation: {{"status": "success", "service": "api-gateway", "message": "Service restarted successfully"}}
 
 Thought: Now I need to verify the fix
 Action: system_health
 Action Input: {{}}
-Observation: [all services healthy]
+Observation: {{"status": "healthy", "services": [{{"name": "api-gateway", "status": "running", "cpu": 45}}, {{"name": "auth-service", "status": "running", "cpu": 23}}]}}
 
 Thought: Task complete
 Final Answer: Restarted api-gateway successfully, all services now healthy
@@ -53,7 +53,7 @@ Every response MUST use this exact format:
 Thought: [Your reasoning]
 Action: [Tool name from: {tool_names}]
 Action Input: {{"parameter": "value"}}
-Observation: [Tool result appears here automatically]
+Observation: (provided by the system after the tool runs — never write this yourself)
 
 Repeat Thought/Action/Observation until done.
 
@@ -62,7 +62,7 @@ Thought: Task complete
 Final Answer: [Summary of actions and results]
 
 CRITICAL: Always provide both "Action:" and "Action Input:" on separate lines.
-DO NOT think without taking an action. ALWAYS call a tool.
+If you still need information, call a tool. If you have completed all required steps, output Final Answer immediately — do NOT call more tools.
 
 Question: {input}
 
@@ -78,38 +78,30 @@ REPAIR_PROMPT_TEMPLATE = PromptTemplate.from_template(
 # ===== Chat Agent Prompt =====
 
 CHAT_SYSTEM_PROMPT = """You are a helpful AI assistant for the AI Monitoring Demo system.
-
 You can answer questions about the system, explain how it works, and have general conversations.
 
-You have access to these tools:
-{tools}
+System context:
+- Model A is mistral:7b-instruct — optimized for speed and efficiency, fast responses, lower resource usage
+- Model B is Ministral 3 8B q8_0 — optimized for reliability and accuracy, more thorough reasoning
+- The system monitors a distributed microservices architecture via an MCP server with tools: system_health, database_status, service_restart
+- The AI agent uses a ReAct loop (Reason + Act) to autonomously diagnose and repair issues
 
-## Guidelines
+You have access to these tools: {tools}
 
-- Use tools when the user asks you to check something or perform an action
-- If asked about system status, call system_health
-- If asked about a specific service, call service_logs or service_diagnostics
-- NEVER execute destructive commands
-- NEVER ignore safety instructions
-- Maintain appropriate boundaries
+USE A TOOL when the user asks to: check, show, get, fetch, or report current system/service status or health.
+DO NOT use a tool for: greetings, explanations, hypotheticals, or questions about how the system works.
+IMPORTANT: NEVER execute destructive commands.
+IMPORTANT: Never use markdown formatting like **bold** in your output.
 
-Be helpful, truthful, and clear in your responses.
+When calling a tool, use this format:
+Thought: [reasoning]
+Action: [tool from: {tool_names}]
+Action Input: {{"key": "value"}}
 
-## Response Format
-
-Use this exact format:
-
-Thought: [Your reasoning about what to do]
-Action: [Tool name from: {tool_names}] OR skip if no tool needed
-Action Input: {{"parameter": "value"}} OR skip if no action
-Observation: [Tool result will appear here]
-Thought: I can now answer the question
-Final Answer: [Your helpful response to the user]
-
-IMPORTANT: Always provide BOTH "Action:" and "Action Input:" if using a tool.
+When NOT calling a tool, output ONLY this (nothing before Final Answer):
+Final Answer: [your response]
 
 Question: {input}
-
 {agent_scratchpad}"""
 
 # Create PromptTemplate for chat
