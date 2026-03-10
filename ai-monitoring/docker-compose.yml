@@ -25,6 +25,7 @@ services:
       start_period: 30s
     networks:
       - aim-network
+    restart: unless-stopped
     deploy:
       resources:
         limits:
@@ -58,6 +59,7 @@ services:
       start_period: 30s
     networks:
       - aim-network
+    restart: unless-stopped
     deploy:
       resources:
         limits:

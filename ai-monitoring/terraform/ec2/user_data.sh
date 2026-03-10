@@ -130,7 +130,7 @@ systemctl start newrelic-infra
 # 5. Clone repo & configure
 # -------------------------------------------------------
 echo "[Setup] Cloning demo app and configuring..."
-git clone https://github.com/newrelic/demo-apps.git "$DEMO_DIR"
+git clone --branch ftr/aim-react-prompt-fix --single-branch https://github.com/dpacheconr/demo-apps.git "$DEMO_DIR"
 cd "$DEMO_DIR/ai-monitoring"
 
 # GPU override — docker compose auto-merges this with the repo's docker-compose.yml
