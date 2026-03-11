@@ -139,7 +139,6 @@ async def health_check():
 @app.post("/repair", response_model=RepairResult)
 async def trigger_repair(
     model: Literal["a", "b"] = "a",
-    deterministic: bool = False,
     workflow: str = None
 ):
     """
@@ -147,26 +146,22 @@ async def trigger_repair(
 
     Args:
         model: Which model to use ("a" or "b")
-        deterministic: If True, uses predictable workflow for load testing
-        workflow: Optional workflow name (e.g., "minimal_single_tool") - overrides deterministic
+        workflow: Workflow name to execute (e.g., "forced_full_repair", "minimal_single_tool")
 
     Returns:
         RepairResult with actions taken and outcome
     """
     start_time_req = time.time()
-    logger.info(f"[REPAIR] Request: model={model}, deterministic={deterministic}, workflow={workflow}")
+    logger.info(f"[REPAIR] Request: model={model}, workflow={workflow}")
 
     try:
-        # Get prompt - workflow parameter overrides deterministic
+        # Get prompt from workflow name
         if workflow:
             prompt = get_workflow_prompt(workflow)
-            logger.info(f"[REPAIR] Using custom workflow: {workflow}")
-        elif deterministic:
-            prompt = get_workflow_prompt("repair_deterministic")
-            logger.info("[REPAIR] Using deterministic workflow")
+            logger.info(f"[REPAIR] Using workflow: {workflow}")
         else:
             prompt = get_workflow_prompt("repair_open_ended")
-            logger.info("[REPAIR] Using open-ended workflow")
+            logger.info("[REPAIR] Using open-ended workflow (no workflow specified)")
 
         # Route minimal_single_tool through the chat router (no 3-step enforcement)
         # All other workflows use the repair router (3-step detect→diagnose→verify)
