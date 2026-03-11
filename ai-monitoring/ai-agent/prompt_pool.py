@@ -1,7 +1,7 @@
 """
 Comprehensive prompt pool for load testing and demo scenarios.
 
-Provides 18 categorized prompts for:
+Provides 19 categorized prompts for:
 - MCP tool testing (healthy/degraded systems)
 - Simple conversational queries
 - Complex diagnostic queries

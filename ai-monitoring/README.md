@@ -10,7 +10,7 @@ This demo showcases:
 - **Distributed Tracing**: Complete visibility across AI agent → MCP server → tool invocations
 - **AI Monitoring**: Model performance metrics, token usage, and tool invocation patterns
 - **LLM Feedback Events**: Binary thumbs-up/down ratings with smart heuristics
-- **Comprehensive Prompt Pool**: 18 test prompts across 6 categories for diverse telemetry
+- **Comprehensive Prompt Pool**: 19 test prompts across 6 categories for diverse telemetry
 - **Hallucination Detection**: Chat interface for testing boundary behaviors
 - **Passive Load Generation**: Automatic background traffic for continuous demo data
 
@@ -50,7 +50,7 @@ The system consists of 6 Docker services:
          │ Passive Load (5-10 req/hour)
 ┌────────┴────────┐
 │     Locust      │ ◄── Auto-generates background traffic
-│  (Port 8089)    │     18-prompt pool → New Relic telemetry
+│  (Port 8089)    │     19-prompt pool → New Relic telemetry
 └─────────────────┘     Starts immediately on launch
 ```
 
@@ -63,7 +63,7 @@ The system consists of 6 Docker services:
 | **mcp-server** | 8002 | FastMCP + FastAPI | Generic system operation tools (6 mock tools) | [mcp-server/README.md](mcp-server/README.md) |
 | **ollama-model-a** | 11434 | Ollama + mistral:7b-instruct-v0.3 | Efficient & Fast LLM (~4GB) | [See below](#ollama-services) |
 | **ollama-model-b** | 11435 | Ollama + ministral-3:8b-instruct-2512-q8_0 | Reliable & Accurate LLM (~10GB, q8_0) | [See below](#ollama-services) |
-| **locust-tests** | 8089 | Locust 2.43.0 | Passive load (5-10 req/hr) with 18-prompt pool | [locust-tests/README.md](locust-tests/README.md) |
+| **locust-tests** | 8089 | Locust 2.43.0 | Passive load (5-10 req/hr) with 19-prompt pool | [locust-tests/README.md](locust-tests/README.md) |
 
 **For detailed service architecture, APIs, and local development, see each service's README.**
 
@@ -139,7 +139,7 @@ docker-compose build --no-cache
 This will build all 6 services (20-30 minutes):
 - Ollama Model A with mistral:7b-instruct-v0.3 (~4GB)
 - Ollama Model B with ministral-3:8b-instruct-2512-q8_0 (~8GB)
-- AI Agent (PydanticAI + New Relic instrumentation)
+- AI Agent (LangChain + New Relic instrumentation)
 - MCP Server (FastMCP + generic system tools)
 - Flask UI (Web interface + Browser monitoring)
 - Locust (Background traffic generation)
@@ -206,7 +206,7 @@ http://localhost:8501
 **How to Use**:
 1. From home page, click "Chat Assistant" card (or navigate to `/chat`)
 2. Select a model (Model A or Model B)
-3. Choose a prompt from the dropdown (18 prompts across 6 categories):
+3. Choose a prompt from the dropdown (19 prompts across 6 categories):
    - **MCP Tool Testing (2)**: Backend-controlled workflows - single tool call or full diagnostic flow
    - **Simple Chat (5)**: Basic conversational queries
    - **Complex Chat (5)**: Multi-faceted diagnostic questions
@@ -693,6 +693,7 @@ The demo showcases generic DevOps/SRE operations through mock tools:
 1. **System Health Check**
    - Returns status of all services (api-gateway, auth-service, database, cache-service)
    - Includes CPU, memory, and uptime metrics
+   - Simulates real-world conditions: 30% chance api-gateway is degraded; recovers 120s after a `service_restart`
    - Simulated response time: 0.5-1.5 seconds
 
 2. **Service Logs**
@@ -804,7 +805,7 @@ ai-monitoring/
 ├── .env.example                # Configuration template
 ├── README.md                   # This file
 ├── flask-ui/                   # Web interface
-├── ai-agent/                   # PydanticAI agent
+├── ai-agent/                   # LangChain agent
 ├── mcp-server/                 # Generic system operation tools
 └── locust-tests/               # Load generation
 ```
