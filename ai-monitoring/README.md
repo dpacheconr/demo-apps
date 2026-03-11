@@ -207,7 +207,7 @@ http://localhost:8501
 1. From home page, click "Chat Assistant" card (or navigate to `/chat`)
 2. Select a model (Model A or Model B)
 3. Choose a prompt from the dropdown (19 prompts across 6 categories):
-   - **MCP Tool Testing (2)**: Backend-controlled workflows - single tool call or full diagnostic flow
+   - **MCP Tool Testing (2)**: Prompt-guided workflows - single tool call or full diagnostic flow
    - **Simple Chat (5)**: Basic conversational queries
    - **Complex Chat (5)**: Multi-faceted diagnostic questions
    - **Error Scenarios (3)**: Empty prompts, invalid services, overload requests
@@ -217,7 +217,8 @@ http://localhost:8501
 5. View prompt preview before sending (category, description, full text)
 
 **What to Test**:
-- **MCP Tools**: Backend-controlled workflows with deterministic tool usage
+
+- **MCP Tools**: Prompt-guided workflows with strongly guided tool usage
 - **Hallucination**: Ask about non-existent features
 - **Prompt Injection**: Try to bypass instructions
 - **Abuse Detection**: Request destructive actions
