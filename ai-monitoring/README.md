@@ -182,20 +182,16 @@ http://localhost:8501
    - **Model A (mistral:7b-instruct-v0.3)**: Efficient & Fast (~2s latency)
    - **Model B (ministral-3:8b-instruct-2512-q8_0)**: Reliable & Accurate (~70s latency, q8_0 high-precision)
 3. Click "Run Workflow"
-4. Watch the agent autonomously:
-   - Check system health status
-   - Read service logs
-   - Diagnose issues
-   - Execute corrective actions (restart, config updates, etc.)
-   - Run diagnostics to verify
+4. Watch the agent autonomously execute a full repair cycle:
+   - Call `check_system_health()` to assess current status
+   - Call `restart_service()` on api-gateway (always, regardless of status)
+   - Call `check_system_health()` again to verify recovery
 
 **What the Agent Does**:
-- Calls `check_system_health()` to assess overall status
-- Uses `get_service_logs()` to diagnose specific issues
-- Executes `restart_service()` when needed
-- Runs `check_database_status()` to verify data layer
-- Performs `run_diagnostics()` for comprehensive checks
-- Updates configuration with `update_configuration()` if required
+
+- Always runs the same 3-step sequence: health check → restart → verify
+- First health check may show degraded (30% chance) or healthy — either way the restart proceeds
+- Final health check confirms recovery (always healthy post-restart for 120s)
 
 **All tools return realistic mock data with simulated latency (0.2-3s) - no real operations performed.**
 
