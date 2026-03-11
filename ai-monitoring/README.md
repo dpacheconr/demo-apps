@@ -891,32 +891,33 @@ For detailed cleanup and disk space management strategies, see the [Cleanup & Di
 
 ### Key Architecture: Backend Workflow Control
 
-**MCP Tool Prompts** (15% of load) use **backend workflow control**:
+**MCP Tool Prompts** (15% of load) use **prompt-guided workflow control**:
 
 ```
 Locust/User → /repair?model=a&workflow=minimal_single_tool
               ↓
-          Backend forces: system_health (exactly 1 call)
+          Prompt instructs: "Call system_health ONCE, then Final Answer. STOP."
               ↓
-          Returns deterministic result
+          Returns result (typically 1 tool call)
 ```
 
 ```
 Locust/User → /repair?model=b&workflow=forced_full_repair
               ↓
-          Backend forces:
+          Prompt instructs:
               1. system_health
-              2. service_restart
+              2. service_restart (api-gateway, regardless of status)
               3. system_health (verify)
               ↓
-          Returns result (3 tool calls, predictable)
+          Returns result (typically 3 tool calls, in order)
 ```
 
 **Benefits**:
-- ✅ Deterministic tool usage (always same number/sequence)
-- ✅ Consistent telemetry (predictable token counts)
-- ✅ No LLM reasoning variability
-- ✅ Perfect for A/B model comparison
+
+- ✅ Strongly guided tool usage (explicit prompt instructions)
+- ✅ Consistent telemetry (low variability in token counts)
+- ✅ Minimal LLM reasoning variability (prompt-guided, not free-form)
+- ✅ Good for A/B model comparison
 
 **Chat Prompts** (85% of load) use **LLM-decided tool usage**:
 

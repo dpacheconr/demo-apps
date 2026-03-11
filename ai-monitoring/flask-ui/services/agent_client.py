@@ -53,7 +53,7 @@ class AgentClient:
         try:
             response = self.session.post(
                 url,
-                params={"model": model},
+                params={"model": model, "workflow": "forced_full_repair"},
                 timeout=timeout
             )
             elapsed = time.time() - start_time

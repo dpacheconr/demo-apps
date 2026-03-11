@@ -168,8 +168,12 @@ async def trigger_repair(
             prompt = get_workflow_prompt("repair_open_ended")
             logger.info("[REPAIR] Using open-ended workflow")
 
-        # Execute agent workflow
-        result = await run_agent_workflow(model, prompt)
+        # Route minimal_single_tool through the chat router (no 3-step enforcement)
+        # All other workflows use the repair router (3-step detect→diagnose→verify)
+        if workflow == "minimal_single_tool":
+            result = await run_chat_workflow(model, prompt)
+        else:
+            result = await run_agent_workflow(model, prompt)
 
         # Extract tool calls from intermediate steps
         tool_calls = []
