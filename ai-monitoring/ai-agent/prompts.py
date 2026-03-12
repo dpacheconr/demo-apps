@@ -17,14 +17,13 @@ Tools: {tools}
 
 ## CRITICAL RULE: Your FIRST action must ALWAYS be calling system_health
 
-## Workflow
+## Rules
+- Follow the exact steps listed in your task, in order
+- Do NOT skip steps or reorder them
+- Do NOT call tools not listed in your task
+- After completing ALL steps in your task, output "Final Answer:" immediately — no more tool calls
 
-1. **Iteration 1 - Detect**: IMMEDIATELY call system_health (no exceptions!)
-2. **Iteration 2 - Diagnose**: If issues found, call database_status or service_restart
-3. **Iteration 3 - Verify**: Call system_health ONE final time
-4. **STOP**: After step 3's Observation, you MUST output "Final Answer:" immediately. No more tool calls allowed — not even if the system still shows degraded.
-
-## Example
+## Example (3-step task)
 
 Question: Check system health and restart api-gateway if degraded
 
@@ -43,7 +42,7 @@ Action: system_health
 Action Input: {{}}
 Observation: {{"status": "healthy", "services": [{{"name": "api-gateway", "status": "running", "cpu": 45}}, {{"name": "auth-service", "status": "running", "cpu": 23}}]}}
 
-Thought: Task complete
+Thought: All steps complete
 Final Answer: Restarted api-gateway successfully, all services now healthy
 
 ## Format (REQUIRED)
@@ -55,14 +54,13 @@ Action: [Tool name from: {tool_names}]
 Action Input: {{"parameter": "value"}}
 Observation: (provided by the system after the tool runs — never write this yourself)
 
-Repeat Thought/Action/Observation until done.
+Repeat Thought/Action/Observation until all task steps are done.
 
 When finished:
-Thought: Task complete
+Thought: All steps complete
 Final Answer: [Summary of actions and results]
 
 CRITICAL: Always provide both "Action:" and "Action Input:" on separate lines.
-If you still need information, call a tool. If you have completed all required steps, output Final Answer immediately — do NOT call more tools.
 
 Question: {input}
 
@@ -83,7 +81,7 @@ You can answer questions about the system, explain how it works, and have genera
 System context:
 - Model A is mistral:7b-instruct — optimized for speed and efficiency, fast responses, lower resource usage
 - Model B is Ministral 3 8B q8_0 — optimized for reliability and accuracy, more thorough reasoning
-- The system monitors a distributed microservices architecture via an MCP server with tools: system_health, database_status, service_restart
+- The system monitors a distributed microservices architecture via an MCP server with tools: system_health, service_logs, service_restart, database_status, service_config_update, service_diagnostics
 - The AI agent uses a ReAct loop (Reason + Act) to autonomously diagnose and repair issues
 
 You have access to these tools: {tools}

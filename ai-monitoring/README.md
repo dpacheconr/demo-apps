@@ -182,18 +182,26 @@ http://localhost:8501
    - **Model A (mistral:7b-instruct-v0.3)**: Efficient & Fast (~2s latency)
    - **Model B (ministral-3:8b-instruct-2512-q8_0)**: Reliable & Accurate (~70s latency, q8_0 high-precision)
 3. Click "Run Workflow"
-4. Watch the agent autonomously execute a full repair cycle:
-   - Call `check_system_health()` to assess current status
-   - Call `restart_service()` on api-gateway (always, regardless of status)
-   - Call `check_system_health()` again to verify recovery
+4. Watch the agent execute a full repair cycle using all 6 available MCP tools:
+   - Call `system_health` to assess current status
+   - Call `service_logs`, `service_diagnostics`, and `database_status` to diagnose
+   - Call `service_config_update` then `service_restart` to remediate
+   - Call `system_health` again to verify recovery
 
 **What the Agent Does**:
 
-- Always runs the same 3-step sequence: health check → restart → verify
-- First health check may show degraded (30% chance) or healthy — either way the restart proceeds
+- Runs a 7-step sequence using all 6 available MCP tools:
+  1. `system_health` — detect overall system status
+  2. `service_logs` — read api-gateway logs
+  3. `service_diagnostics` — comprehensive api-gateway health check
+  4. `database_status` — verify data layer health
+  5. `service_config_update` — update api-gateway connection pool config (requires restart)
+  6. `service_restart` — restart api-gateway to apply the config change
+  7. `system_health` — verify recovery
+- First health check may show degraded (30% chance) — the workflow proceeds regardless
 - Final health check confirms recovery (always healthy post-restart for 120s)
 
-**All tools return realistic mock data with simulated latency (0.2-3s) - no real operations performed.**
+**All tools return realistic mock data - no real operations performed.**
 
 ### Chat Mode (/chat)
 
@@ -687,33 +695,31 @@ The demo showcases generic DevOps/SRE operations through mock tools:
 
 ### Available System Operations
 
-1. **System Health Check**
+1. **`system_health`**
    - Returns status of all services (api-gateway, auth-service, database, cache-service)
    - Includes CPU, memory, and uptime metrics
    - Simulates real-world conditions: 30% chance api-gateway is degraded; recovers 120s after a `service_restart`
-   - Simulated response time: 0.5-1.5 seconds
 
-2. **Service Logs**
+2. **`service_logs`**
    - Retrieves recent log entries from any service
    - Realistic log format with timestamps and levels
    - Configurable line count (default: 50)
 
-3. **Service Restart**
+3. **`service_restart`**
    - Simulates restarting a degraded or failed service
-   - Returns restart time and new process ID
-   - Delay: 1.5-3.0 seconds
+   - Returns new process ID and confirmation
+   - Instant mock operation (no simulated delay)
 
-4. **Database Status**
+4. **`database_status`**
    - Connection pool metrics and query performance
    - Includes slow query detection and cache hit rates
    - Simulated PostgreSQL database
 
-5. **Configuration Updates**
+5. **`service_config_update`**
    - Update service configuration values
    - Indicates when restart is required
-   - Fast operation: 0.2-0.5 seconds
 
-6. **Comprehensive Diagnostics**
+6. **`service_diagnostics`**
    - Multi-point health checks (endpoint, database, cache, dependencies)
    - Resource usage monitoring
    - Occasionally returns degraded status (10% of checks)
@@ -777,7 +783,7 @@ mcp-server (Python agent + Docker API)
 
 **AI Monitoring Data Captured**:
 - LLM model performance comparison (mistral:7b-instruct-v0.3 vs ministral-3:8b-instruct-2512-q8_0)
-- Tool call success rates (docker_ps, docker_restart, docker_logs, etc.)
+- Tool call success rates (system_health, service_restart, database_status, etc.)
 - Response latency by model
 - Token usage and costs
 - Hallucination detection patterns
@@ -965,8 +971,8 @@ newrelic.agent.record_llm_feedback_event(
 
 | Category | Count | Endpoint | Workflow | LLM Control | Weight |
 |----------|-------|----------|----------|-------------|--------|
-| MCP Healthy | 1 | `/repair` | `minimal_single_tool` | ❌ Backend | 10% |
-| MCP Degraded | 1 | `/repair` | `forced_full_repair` | ❌ Backend | 5% |
+| MCP Healthy | 1 | `/repair` | `minimal_single_tool` | Prompt-guided | 10% |
+| MCP Degraded | 1 | `/repair` | `forced_full_repair` | Prompt-guided | 5% |
 | Simple Chat | 5 | `/chat` | N/A | ✅ LLM | 35% |
 | Complex Chat | 5 | `/chat` | N/A | ✅ LLM | 30% |
 | Error Scenarios | 3 | `/chat` | N/A | ✅ LLM | 10% |

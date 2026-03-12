@@ -7,7 +7,7 @@ Autonomous reasoning engine powered by **LangChain** that executes multi-step sy
 - **Autonomous Tool Workflows**: Executes multi-step system operations through intelligent tool orchestration
 - **LangChain Integration**: Native LangChain agent with Ollama and MCP tool support
 - **Dual Model Support**: A/B testing with two LLM models — Model A (mistral:7b-instruct, Efficient & Fast) and Model B (ministral-3:8b-instruct-2512-q8_0, Reliable & Accurate)
-- **Backend Workflow Control**: Deterministic tool invocations via workflow parameters
+- **Prompt-Guided Workflows**: Strongly guided tool sequences via workflow prompt parameters
 - **MCP Tool Calling**: Integrates with MCP server for generic system operation tools
 - **LLM Feedback Events**: Automatic binary rating generation with smart heuristics
 - **Token Counting**: tiktoken-based client-side token counting for accurate metrics
@@ -70,7 +70,7 @@ Flask UI          AI Agent         LangChain        Ollama A/B       MCP Server
 2. **LangChain Agent**: ReAct pattern agent with tool calling and reasoning
 3. **MCP Tool Integration**: Native LangChain tool wrappers for MCP server calls
 4. **Observability Layer**: New Relic feedback events, token counting, trace correlation
-5. **Workflow Engine**: Backend-controlled tool invocations for deterministic testing
+5. **Workflow Engine**: Prompt-guided tool sequences for consistent demo workflows
 6. **Metrics Tracker**: In-memory storage for model performance metrics
 
 ## API Reference
@@ -78,13 +78,13 @@ Flask UI          AI Agent         LangChain        Ollama A/B       MCP Server
 ### Endpoints
 
 #### `POST /repair?model={a|b}&workflow={workflow_name}`
-Trigger tool execution workflow with specified model and optional backend-controlled workflow.
+Trigger tool execution workflow with specified model and optional prompt-guided workflow.
 
 **Query Parameters**:
 - `model` (required): `"a"` for mistral:7b-instruct or `"b"` for ministral-3:8b-instruct-2512-q8_0
-- `workflow` (optional): Backend workflow name (`minimal_single_tool`, `forced_full_repair`, etc.)
-  - If specified: Backend forces specific tool sequence (deterministic)
-  - If omitted: LLM decides tool usage (autonomous)
+- `workflow` (optional): Workflow name (`minimal_single_tool`, `forced_full_repair`, etc.)
+  - If specified: Prompt strongly guides the tool sequence
+  - If omitted: LLM decides tool usage autonomously
 
 **Response**:
 ```json
@@ -165,22 +165,22 @@ Detailed agent status with model information.
 }
 ```
 
-## Backend Workflow Control
+## Prompt-Guided Workflow Control
 
-The agent supports **deterministic tool invocations** via workflow parameters:
+The agent supports **prompt-guided tool sequences** via workflow parameters:
 
 ### Available Workflows
 
 | Workflow | Description | Tool Sequence |
 |----------|-------------|---------------|
 | `minimal_single_tool` | Single health check | `system_health` (1 call) |
-| `forced_full_repair` | Complete repair cycle | `system_health` → `service_restart` → `system_health` (3 calls) |
+| `forced_full_repair` | Complete repair cycle (all 6 tools, 7 calls) | `system_health` → `service_logs` → `service_diagnostics` → `database_status` → `service_config_update` → `service_restart` → `system_health` |
 | `repair_deterministic` | Conditional repair | Health check, diagnose if needed, restart, verify |
 | `repair_open_ended` | LLM-controlled | Agent decides tool sequence based on context |
 
 **Usage**:
 ```bash
-# Backend-controlled (deterministic)
+# Prompt-guided workflow
 curl -X POST "http://localhost:8001/repair?model=a&workflow=minimal_single_tool"
 
 # LLM-controlled (autonomous)

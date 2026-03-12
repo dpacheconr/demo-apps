@@ -17,12 +17,16 @@ MINIMAL_SINGLE_TOOL = """Your task: Call system_health ONCE, then immediately pr
 
 STOP after 1 tool call. Do NOT call any other tools. DO NOT verify or check again."""
 
-FORCED_FULL_REPAIR = """Perform a complete repair workflow test:
-1. Call system_health to check the system
-2. Call service_restart to restart the api-gateway service (regardless of status)
-3. Call system_health again to verify the system
+FORCED_FULL_REPAIR = """Perform a complete repair workflow demonstrating all available tools:
+1. Call system_health to check overall system status
+2. Call service_logs for api-gateway to read recent logs
+3. Call service_diagnostics on api-gateway for a comprehensive health check
+4. Call database_status to verify the data layer
+5. Call service_config_update on api-gateway to set connection_pool_size to 50 (config change requires restart)
+6. Call service_restart to restart api-gateway and apply the config change
+7. Call system_health again to verify the system has recovered
 
-Execute all 3 steps in order to demonstrate the full workflow."""
+Execute all 7 steps in order. After step 7, output your Final Answer."""
 
 REPAIR_WORKFLOW_DETERMINISTIC = """
 Check system health. If the api-gateway service is degraded or has errors, read its logs

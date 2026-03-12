@@ -18,6 +18,21 @@ logger = logging.getLogger(__name__)
 _last_restart_time: dict = {}
 
 
+def _normalize_service_name(raw: str) -> str:
+    """
+    Normalize service_name from LangChain ReAct parser.
+    The parser sometimes passes the full JSON action input string
+    (e.g. '{"service_name": "api-gateway"}') instead of the bare value.
+    """
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict) and "service_name" in parsed:
+            return parsed["service_name"]
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return raw
+
+
 def check_system_health() -> str:
     """
     Returns overall system health status.
@@ -91,6 +106,7 @@ def restart_service(service_name: str) -> str:
 
     Simulates a service restart with appropriate delay.
     """
+    service_name = _normalize_service_name(service_name)
     logger.info(f"Tool called: restart_service({service_name})")
 
     _last_restart_time[service_name] = time.time()
