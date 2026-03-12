@@ -144,7 +144,7 @@ class PassiveLoadUser(HttpUser):
             json=request_body,
             catch_response=True,
             name=f"{category} (Model {model.upper()})",
-            timeout=120  # 2 minute timeout for complex workflows
+            timeout=600  # 10 minute timeout for complex workflows (Model B ~70s/call × 7 steps)
         ) as response:
             if response.status_code == 200:
                 try:
