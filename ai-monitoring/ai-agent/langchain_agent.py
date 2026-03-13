@@ -56,7 +56,7 @@ MODEL_B_NAME = os.getenv("MODEL_B_NAME", "ministral-3:8b-instruct-2512-q8_0")
 
 # Agent execution limits (tunable for local vs cloud-hosted models)
 AGENT_MAX_ITERATIONS = int(os.getenv("AGENT_MAX_ITERATIONS", "10"))
-AGENT_MAX_EXECUTION_TIME = int(os.getenv("AGENT_MAX_EXECUTION_TIME", "300"))
+AGENT_MAX_EXECUTION_TIME = int(os.getenv("AGENT_MAX_EXECUTION_TIME", "600"))
 
 
 class ModelRouter:
