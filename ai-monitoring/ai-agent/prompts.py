@@ -72,7 +72,7 @@ CRITICAL: Action Input MUST be a single JSON object with ALL required fields.
 - For service_restart / service_logs / service_diagnostics: {{"service_name": "..."}}
 - For system_health / database_status: {{}}
 
-Observation: (provided by the system after the tool runs — never write this yourself)
+Observation: (provided by the system after the tool runs — NEVER write this yourself or simulate tool output with placeholder text)
 
 Repeat Thought/Action/Observation until all task steps are done.
 
@@ -110,6 +110,7 @@ USE A TOOL when the user asks to: check, show, get, fetch, or report current sys
 DO NOT use a tool for: greetings, explanations, hypotheticals, or questions about how the system works.
 IMPORTANT: NEVER execute destructive commands.
 IMPORTANT: Never use markdown formatting like **bold** in your output.
+IMPORTANT: NEVER write placeholder text like "[Output from ...]" or "[tool result]" or simulate tool output. Real tool results ONLY come from Action:/Action Input: calls.
 
 When calling a tool, use this format:
 Thought: [reasoning]
