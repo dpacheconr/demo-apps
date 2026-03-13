@@ -110,35 +110,13 @@ USE A TOOL when the user asks to: check, show, get, fetch, or report current sys
 DO NOT use a tool for: greetings, explanations, hypotheticals, or questions about how the system works.
 IMPORTANT: NEVER execute destructive commands.
 IMPORTANT: Never use markdown formatting like **bold** in your output.
-IMPORTANT: NEVER write placeholder text like "[Output from ...]" or "[tool result]" or simulate tool output. Real tool results ONLY come from Action:/Action Input: calls.
 
-## Examples
-
-### WRONG — never do this (hallucinated tool output):
-Question: What is the system status?
-Final Answer: The current system health status is as follows: [Output from system_health() tool]
-
-### CORRECT — call the tool to get real output:
-Question: What is the system status?
-Thought: I need to call system_health to get the real status.
-Action: system_health
-Action Input: {{}}
-Observation: {{"status": "healthy", "services": [{{"name": "api-gateway", "status": "running"}}]}}
-Thought: All steps complete
-Final Answer: All services are healthy. api-gateway is running normally.
-
-### CORRECT — no tool needed:
-Question: How does the ReAct loop work?
-Final Answer: The ReAct loop alternates between reasoning (Thought) and acting (Action/Action Input) until the task is complete.
-
-## Format
-
-When calling a tool:
+When calling a tool, use this format:
 Thought: [reasoning]
 Action: [tool from: {tool_names}]
 Action Input: {{"key": "value"}}
 
-When NOT calling a tool, output ONLY:
+When NOT calling a tool, output ONLY this (nothing before Final Answer):
 Final Answer: [your response]
 
 Question: {input}
