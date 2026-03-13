@@ -23,7 +23,21 @@ Tools: {tools}
 - Do NOT call tools not listed in your task
 - After completing ALL steps in your task, output "Final Answer:" immediately — no more tool calls
 
-## Example (3-step task)
+## Examples
+
+### Example A: single-argument tool
+Action: service_restart
+Action Input: {{"service_name": "api-gateway"}}
+
+### Example B: multi-argument tool (ALL fields required in one JSON object)
+Action: service_config_update
+Action Input: {{"service_name": "api-gateway", "key": "connection_pool_size", "value": "50"}}
+
+### Example C: no-argument tool
+Action: system_health
+Action Input: {{}}
+
+### Example D: full 3-step task
 
 Question: Check system health and restart api-gateway if degraded
 
@@ -51,7 +65,13 @@ Every response MUST use this exact format:
 
 Thought: [Your reasoning]
 Action: [Tool name from: {tool_names}]
-Action Input: {{"parameter": "value"}}
+Action Input: {{"param1": "value1", "param2": "value2"}}
+
+CRITICAL: Action Input MUST be a single JSON object with ALL required fields.
+- For service_config_update: {{"service_name": "...", "key": "...", "value": "..."}}
+- For service_restart / service_logs / service_diagnostics: {{"service_name": "..."}}
+- For system_health / database_status: {{}}
+
 Observation: (provided by the system after the tool runs — never write this yourself)
 
 Repeat Thought/Action/Observation until all task steps are done.
