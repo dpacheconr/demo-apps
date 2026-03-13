@@ -7,17 +7,44 @@ Provides:
 - Async execution support
 """
 
+import json
 import os
 import logging
-from typing import Literal, Dict, Any, List
+from typing import Literal, Dict, Any, List, Union
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_react_agent, AgentExecutor
+from langchain.agents.output_parsers.react_single_input import ReActSingleInputOutputParser
 from langchain.prompts import PromptTemplate
+from langchain_core.agents import AgentAction, AgentFinish
 
 from mcp_tools import create_mcp_tools
 from observability import NewRelicCallback, MetricsTracker
 
 logger = logging.getLogger(__name__)
+
+
+class JSONReActOutputParser(ReActSingleInputOutputParser):
+    """ReAct output parser that JSON-parses Action Input for multi-arg tools.
+
+    LangChain's default ReActSingleInputOutputParser returns Action Input as a
+    raw string. When BaseTool._parse_input receives a string, it wraps it as
+    {first_field: string} — which fails pydantic validation for any tool that
+    requires more than one field. This parser JSON-parses the action input when
+    possible so the tool receives a dict and takes the correct validation path.
+    """
+
+    def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+        result = super().parse(text)
+        if isinstance(result, AgentAction) and isinstance(result.tool_input, str):
+            stripped = result.tool_input.strip()
+            if stripped.startswith("{"):
+                try:
+                    parsed = json.loads(stripped)
+                    return AgentAction(result.tool, parsed, result.log)
+                except json.JSONDecodeError:
+                    pass
+        return result
+
 
 # Model configurations
 # Use OpenAI-compatible endpoints (/v1/chat/completions) for New Relic instrumentation
@@ -130,10 +157,13 @@ class ModelRouter:
         llm_with_callbacks = llm.with_config(callbacks=[nr_callback])
 
         # Create ReAct agent with callback-enabled LLM
+        # Use JSONReActOutputParser so multi-arg tools (e.g. service_config_update)
+        # receive a dict instead of a raw string, avoiding pydantic validation errors.
         agent = create_react_agent(
             llm=llm_with_callbacks,
             tools=self.tools,
             prompt=prompt_template,
+            output_parser=JSONReActOutputParser(),
         )
 
         # Wrap in AgentExecutor
