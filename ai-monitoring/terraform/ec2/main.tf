@@ -127,11 +127,22 @@ resource "aws_iam_instance_profile" "aim_demo" {
   role = aws_iam_role.aim_demo.name
 }
 
+# ---------- Force EC2 Recreation ----------
+# Generates a new UUID on every apply, triggering EC2 replacement each time.
+
+resource "terraform_data" "always_replace" {
+  input = timestamp()
+}
+
 # ---------- EC2 Instance ----------
 
 resource "aws_instance" "aim_demo" {
   ami                         = data.aws_ami.dl_nvidia.id
   instance_type               = var.instance_type
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.always_replace]
+  }
   key_name                    = aws_key_pair.this.key_name
   iam_instance_profile        = aws_iam_instance_profile.aim_demo.name
   vpc_security_group_ids      = [aws_security_group.aim_demo.id]

@@ -82,6 +82,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL}
       - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
       - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME_MCP_SERVER}
+      - NEW_RELIC_LABELS=${NEW_RELIC_LABELS}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 60s
@@ -107,9 +108,10 @@ services:
       - MODEL_B_NAME=${MODEL_B_NAME}
       - AGENT_PORT=${AGENT_PORT}
       - AGENT_MAX_ITERATIONS=${AGENT_MAX_ITERATIONS:-10}
-      - AGENT_MAX_EXECUTION_TIME=${AGENT_MAX_EXECUTION_TIME:-300}
+      - AGENT_MAX_EXECUTION_TIME=${AGENT_MAX_EXECUTION_TIME:-600}
       - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
       - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME_AI_AGENT}
+      - NEW_RELIC_LABELS=${NEW_RELIC_LABELS}
     depends_on:
       ollama-model-a:
         condition: service_healthy
@@ -144,6 +146,7 @@ services:
       - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
       - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME_FLASK_UI}
       - NEW_RELIC_CONFIG_FILE=/app/newrelic.ini
+      - NEW_RELIC_LABELS=${NEW_RELIC_LABELS}
     depends_on:
       ai-agent:
         condition: service_healthy

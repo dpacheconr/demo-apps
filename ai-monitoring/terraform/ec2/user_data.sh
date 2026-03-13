@@ -121,6 +121,8 @@ apt-get install -y newrelic-infra
 cat > /etc/newrelic-infra.yml <<NRIEOF
 license_key: ${new_relic_license_key}
 display_name: aim-demo-ec2
+custom_attributes:
+  demo: aim-demo
 NRIEOF
 
 systemctl enable newrelic-infra
@@ -187,6 +189,7 @@ NEW_RELIC_LICENSE_KEY=${new_relic_license_key}
 NEW_RELIC_APP_NAME_AI_AGENT=aim-demo_ai-agent
 NEW_RELIC_APP_NAME_MCP_SERVER=aim-demo_mcp-server
 NEW_RELIC_APP_NAME_FLASK_UI=aim-demo_flask-ui
+NEW_RELIC_LABELS=demo:aim-demo
 ENVEOF
 
 # -------------------------------------------------------
