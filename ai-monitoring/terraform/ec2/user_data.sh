@@ -132,7 +132,7 @@ systemctl start newrelic-infra
 # 5. Clone repo & configure
 # -------------------------------------------------------
 echo "[Setup] Cloning demo app and configuring..."
-git clone --branch ftr/aim-react-prompt-fix --single-branch https://github.com/dpacheconr/demo-apps.git "$DEMO_DIR"
+git clone --branch main --single-branch https://github.com/newrelic/demo-apps.git "$DEMO_DIR"
 cd "$DEMO_DIR/ai-monitoring"
 
 # GPU override — docker compose auto-merges this with the repo's docker-compose.yml
@@ -197,7 +197,7 @@ ENVEOF
 # -------------------------------------------------------
 echo "[Setup] Building and starting services..."
 docker compose build --no-cache
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
 echo "Models loaded:"
 docker exec aim-ollama-model-a ollama list

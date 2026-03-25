@@ -63,7 +63,7 @@ variable "model_a_name" {
 variable "model_b_name" {
   description = "Ollama model B identifier"
   type        = string
-  default     = "ministral-3:8b-instruct-2512-q8_0"
+  default     = "ministral-3:8b-instruct-2512-q4_K_M"
 }
 
 variable "instance_ttl_hours" {
