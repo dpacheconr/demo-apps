@@ -150,21 +150,26 @@ async def get_recent_orders(limit: int = 50):
 
         logger.info(f"Fetching {len(orders)} recent orders with items")
 
-        # Build result with order items
-        # TODO: Consider optimizing this with a JOIN query for better performance
+        # Fetch items for all orders in a single batched query instead of
+        # one query per order.
+        order_ids = [order['id'] for order in orders]
+        items_query = """
+            SELECT oi.order_id, oi.id, oi.variety_id, av.name as variety_name,
+                   oi.quantity_lbs, oi.unit_price, oi.subtotal
+            FROM order_items oi
+            JOIN apple_varieties av ON oi.variety_id = av.id
+            WHERE oi.order_id = ANY($1::int[])
+        """
+        items = await db.fetch(items_query, order_ids)
+
+        items_by_order_id = {}
+        for item in items:
+            items_by_order_id.setdefault(item['order_id'], []).append(dict(item))
+
         result = []
         for order in orders:
-            items_query = """
-                SELECT oi.id, oi.variety_id, av.name as variety_name,
-                       oi.quantity_lbs, oi.unit_price, oi.subtotal
-                FROM order_items oi
-                JOIN apple_varieties av ON oi.variety_id = av.id
-                WHERE oi.order_id = $1
-            """
-            items = await db.fetch(items_query, order['id'])
-
             order_dict = dict(order)
-            order_dict['items'] = [dict(item) for item in items]
+            order_dict['items'] = items_by_order_id.get(order['id'], [])
             result.append(order_dict)
 
         logger.info(f"Returned {len(result)} orders with items")
